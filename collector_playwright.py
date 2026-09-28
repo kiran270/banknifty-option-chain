@@ -87,19 +87,13 @@ def fetch_ticker_data(context, ticker, strike, option_type, timeout_ms=15000):
         url = f"https://gocharting.com/terminal?ticker=NSE:OPTIONS:{ticker}"
         page.goto(url, wait_until="commit", timeout=15000)
         
-        # Wait for page to load
-        page.wait_for_timeout(5000)
+        # Wait for page to load and data to stream
+        page.wait_for_timeout(6000)
         
-        # Trigger delta display with Alt+D (use keyboard down/up for modifiers)
-        page.keyboard.down("Alt")
-        page.keyboard.press("d")
-        page.keyboard.up("Alt")
-        page.wait_for_timeout(1000)
-        
-        # Wait for snapshot data
-        deadline = datetime.now().timestamp() * 1000 + timeout_ms
+        # Wait for snapshot data with longer timeout
+        deadline = datetime.now().timestamp() * 1000 + (timeout_ms + 5000)
         while snapshot_data is None and datetime.now().timestamp() * 1000 < deadline:
-            page.wait_for_timeout(300)
+            page.wait_for_timeout(500)
         
         # Extract data from snapshot
         if snapshot_data:
