@@ -42,7 +42,10 @@ def parse_number(value):
 def create_driver():
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
     options = Options()
-    options.add_argument(f"--user-data-dir={PROFILE_DIR}")
+    # Don't use profile dir in Docker - rely only on session.json for auth
+    use_profile = not os.path.exists("/.dockerenv")  # Check if running in Docker
+    if use_profile:
+        options.add_argument(f"--user-data-dir={PROFILE_DIR}")
     options.add_argument("--window-size=1440,900")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -69,6 +72,7 @@ def create_driver():
 
     if SESSION_FILE.exists():
         driver.get("https://gocharting.com/")
+        time.sleep(2)  # Wait for page to load before injecting session
         saved_session = json.loads(SESSION_FILE.read_text(encoding="utf-8"))
         cookies = saved_session.get("cookies", [])
         for saved in cookies:
@@ -87,6 +91,7 @@ def create_driver():
         for key, value in saved_session.get("session_storage", {}).items():
             driver.execute_script("sessionStorage.setItem(arguments[0], arguments[1]);", key, value)
         driver.refresh()
+        time.sleep(3)  # Wait for session to fully load
     return driver
 
 
