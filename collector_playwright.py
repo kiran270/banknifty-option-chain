@@ -90,8 +90,10 @@ def fetch_ticker_data(context, ticker, strike, option_type, timeout_ms=15000):
         # Wait for page to load
         page.wait_for_timeout(5000)
         
-        # Trigger delta display with Alt+D
-        page.keyboard.press("Alt+d")
+        # Trigger delta display with Alt+D (use keyboard down/up for modifiers)
+        page.keyboard.down("Alt")
+        page.keyboard.press("d")
+        page.keyboard.up("Alt")
         page.wait_for_timeout(1000)
         
         # Wait for snapshot data
