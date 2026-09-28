@@ -1,0 +1,12 @@
+services:
+  banknifty-api:
+    build: .
+    container_name: banknifty-api
+    restart: unless-stopped
+    shm_size: "2gb"
+    ports:
+      - "5050:5050"
+    env_file:
+      - .env.docker
+    volumes:
+      - ./data:/app/data
