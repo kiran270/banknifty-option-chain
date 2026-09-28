@@ -3,6 +3,7 @@
 .chrome-profile/
 data/*
 !data/.gitkeep
+!data/session.json
 *.db
 __pycache__/
 *.pyc
