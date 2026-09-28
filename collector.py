@@ -48,6 +48,15 @@ def create_driver():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-blink-features=AutomationControlled")
+    # Additional options for better WebSocket/performance logging in headless
+    options.add_argument("--enable-features=NetworkService,NetworkServiceInProcess")
+    options.add_argument("--disable-features=VizDisplayCompositor")
+    options.add_argument("--enable-logging")
+    options.add_argument("--v=1")
+    # Ensure JavaScript is enabled
+    options.add_experimental_option("prefs", {
+        "profile.default_content_setting_values.javascript": 1
+    })
     if CHROME_BINARY:
         options.binary_location = CHROME_BINARY
     if HEADLESS:
@@ -132,8 +141,11 @@ def collect_ticker(driver, ticker, strike, option_type):
         driver.get_log("performance")
         url = f"https://gocharting.com/terminal?ticker=NSE:OPTIONS:{ticker}"
         driver.get(url)
-        time.sleep(3.5)
+        # Increased wait time for WebSocket connections to establish in headless mode
+        time.sleep(5.0)
         ActionChains(driver).key_down(Keys.ALT).send_keys("d").key_up(Keys.ALT).perform()
+        # Additional wait after triggering delta display
+        time.sleep(1.0)
 
         snapshot = None
         deadline = time.time() + FETCH_TIMEOUT
@@ -242,6 +254,7 @@ def _fill_result(driver, ticker, strike, option_type, snapshot):
         "open": r"O:\s*([\d,.]+)", "high": r"H:\s*([\d,.]+)",
         "low": r"L:\s*([\d,.]+)", "close": r"C:\s*([\d,.]+)",
         "volume": r"\bV:\s*([\d,.]+[KkMm]?)",
+        "cumulative_delta": r"(?:Cumulative\s*)?Delta[:\s]+([-+]?[\d,.]+[KkMm]?)",
     }
     for field, pattern in fallbacks.items():
         if result[field] is None:
@@ -275,7 +288,7 @@ def collect_batch(driver, entries):
                 break
             time.sleep(0.1)
 
-    time.sleep(3.5)
+    time.sleep(5.0)  # Increased for headless mode WebSocket connections
     for ticker, _, _ in entries:
         handle = handles.get(ticker)
         if not handle:
@@ -285,6 +298,9 @@ def collect_batch(driver, entries):
             ActionChains(driver).key_down(Keys.ALT).send_keys("d").key_up(Keys.ALT).perform()
         except Exception:
             pass
+    
+    # Additional wait after triggering delta on all tabs
+    time.sleep(1.5)
 
     pending = {ticker for ticker, _, _ in entries if ticker in handles}
     deadline = time.time() + FETCH_TIMEOUT
