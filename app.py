@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from waitress import serve
 
-from collector_playwright import collect_option_chain
+from collector import collect_option_chain
 from db import connect, init_db
 
 load_dotenv()
